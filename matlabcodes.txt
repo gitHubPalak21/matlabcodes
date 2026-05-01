@@ -1,0 +1,275 @@
+BIG M METHOD
+
+% Max z=x1+x2
+% s.t.
+% x1+x2=4
+% x1+2x2>=6
+% x1,x2>=0
+%
+% Standard form:
+% Max z=x1+x2-0x3-Mx4-Mx5
+% s.t.
+% x1+x2+x4=4
+% x1+2x2-x3+x5=6
+% x1,x2,x3,x4,x5>=0
+
+clc;
+clear all;
+M=10000;
+C=[1 1 0 -M -M];
+A=[1 1 0 1 0;1 2 -1 0 1];
+b=[4; 6];
+m=size(A,1);
+n=size(A,2);
+Y=[A b];
+bv_index=[4 5];
+
+for s=1:50
+    Xb=Y(:,end);
+    Cb=C(bv_index);
+    Z=Cb*Xb;
+    ZjCj=Cb*Y(:,1:n)-C;
+    table=[ZjCj Z;Y];
+    disp("Table "+s+":")
+    disp(table)
+
+    if all(ZjCj>=0)
+        sol=zeros(1,n);
+        sol(bv_index)=Xb;
+        disp("Optimal sol.:")
+        disp(sol)
+        disp("Optimal value:")
+        disp(Z)
+        if any(sol(4:5)>0)
+            disp("Infeasible solution")
+        end
+        break
+    else
+        [a EV]=min(ZjCj);
+        if all(Y(:,EV)<=0)
+            disp('Unbounded Solution')
+            break
+        else
+            ratio=zeros(1,m);
+            for j=1:m
+                if (Y(j,EV)>0)
+                    ratio(j)=Xb(j)/Y(j,EV);
+                else
+                    ratio(j)=inf;
+                end
+            end
+        end
+        [k, LV] = min(ratio);
+        bv_index(LV) = EV;
+    end
+
+    pivot=Y(LV,EV);
+    Y(LV,:)=Y(LV,:)/pivot;
+    for i=1:m
+        if i~=LV
+            Y(i,:)=Y(i,:)-Y(i,EV)*Y(LV,:);
+        end
+    end
+end
+
+
+LEAS_cOST METHOD
+
+clc;
+clear;
+cost=[11 13 17 14;
+    16 18 14 10;
+    21 24 13 10;];% original(not balanced yet)
+supply=[10 5 9];
+demand=[8 7 15 4];
+[m,n]=size(cost);
+%m->no. of sources
+%n->no. of destinations
+S=sum(supply);
+D=sum(demand);
+if(S==D)
+    disp('Problem is balanced')
+elseif(S<D)
+    cost(end+1,:)=zeros(1,n);% in place of end we can also write m
+    supply(end+1)=D-S;
+else
+    cost(:,end+1)=zeros(m,1);% in place of end we can also write n
+    demand(end+1) = S-D;
+end
+disp("Balanced TP:")
+table=[cost supply';demand sum(supply)];
+disp(table)
+
+[m,n]=size(cost);%of balanced TP
+X=zeros(m,n);%initialization of bfs(soution)
+I_cost=cost;%I_cost is initial cost matrix
+while(any(supply~=0)||any(demand~=0))
+    min_cost=min(cost(:));% will give min from whole matrix
+    [r,c]=find(cost==min_cost);% to find all the cells where we can allocate...r will give row indices and c will give column indices
+    y=min(supply(r),demand(c));
+    [alloc,index]=max(y);
+    rr=r(index);
+    cc=c(index);
+    X(rr,cc)=alloc;
+    supply(rr)=supply(rr)-alloc;
+    demand(cc)=demand(cc)-alloc;
+    cost(rr,cc)=inf;
+end
+
+cost_ec=X.*I_cost;
+final_cost=sum(cost_ec(:));
+disp("Final Allocation Matrix:")
+disp(X)
+disp("Total Transportation Cost:")
+disp(final_cost)
+
+SIMPLEX METHOD
+% Max z=x1+2x2+3x3
+% s.t.
+% x1+2x2<=20
+% 3x1+4x3<=30
+% x1,x2,x3>=0
+% Standard form:
+% Max z=x1+2x2+3x3+0x4+0x5
+% s.t.
+% x1+2x2+x4=20
+% 3x1+4x3+x5=30
+% x1,x2,x3,x4,x5>=0
+
+% f(Xb)=objective function vaue at current table
+
+clc;
+clear all;
+C=[1 2 3 0 0];
+A=[1 2 0 1 0;3 0 4 0 1];
+b=[20; 30];
+m=size(A,1); % no. of constraints
+n=size(A,2); % no. of variables
+Y=[A b];
+bv_index=n-m+1:n; % = [4 5] % only when we write starting basic varibales on the right hand side of table
+for s=1:50
+    Xb=Y(:,end);% in place of end you can also write n+1
+    Cb=C(bv_index);
+    % Calculate the objective function value at the current basic feasible solution
+    Z=Cb*Xb; % here Cb is row and Xb is column vector
+    ZjCj=Cb*Y(:,1:n)-C;
+    table=[ZjCj Z;Y];
+    disp("Table "+s+":")
+    disp(table)
+    % Since it is max prob, so all ZjCj should be >=0
+    if(ZjCj>=0) %<= for min prob
+        disp("Optimal sol.:")
+        disp(Xb)
+        disp("Optimal value:")
+        disp(Z)
+        break
+    else
+        %For max, most negative ZjCj will enter into basis
+        [a EV]=min(ZjCj);% max(ZjCj) for min prob
+        if (Y(:,EV)<=0)
+            disp('Unbounded Solution')
+            break
+        else
+            for j=1:m
+                if (Y(j,EV)>0)
+                    ratio(j)=Xb(j)/Y(j,EV);
+                else
+                    ratio(j) = inf; % Set to infinity if Y(j, EV) <= 0
+                end
+            end
+        end
+        % Determine the entering variable and update the basis
+        [k, LV] = min(ratio);
+        bv_index(LV) = EV; % Update basic variable index
+    end
+    pivot=Y(LV,EV);
+    Y(LV,:)=Y(LV,:)/pivot; % Pivot row normalization
+    for i=1:m
+        if i~=LV
+            Y(i,:)=Y(i,:)-Y(i,EV)*Y(LV,:); % Row operations
+        end
+    end
+end
+
+STEEPEST DESCENT
+
+%Steepest Descent Method(Gradient method)
+%search technique used to find out the min/max of a function of n variables
+%min f(x1,x2,...,xn)...function is given
+%it is an iterative technique
+%X0(x10,x20,...,xn0) is initial approximation(given)
+%tolerance is given
+%stopping criterias:
+%1)|f(Xi+1)-f(Xi)|<=tol
+%2)||Xi+1 - Xi||<=tol(infinity norm or l2 norm)...function is norm(e,inf)
+%3)|df/dXi|<=tol , for all i
+
+%X1=X0+lambda0*S0
+%where, S1 is the direction and lambda1 is the step size
+%S0=-gradient(f)
+
+%Gradient(f(x))=(df/dx1,df/dx2,...,df/dxn)
+
+%if function is max ...convert to min with -coeficients
+%        or take S0=gradient(f)
+
+%X0,f(X0),gradient(f(X0)),S0=-gradient(f(X0)),X1=X0+lamda0*S0,f(X1)->it is a single variable function
+
+%min f(x)
+
+%we get X1, check stoppping criteria
+
+%by default, we get answer upto 4 decimal places(format short)
+%to get more decimal places, write format long
+%syms x1,x2...these will be treaed as symbolic variables
+%    to use gradient function , we have used syms..so we have to use inline to put vaue in symbolic variables
+%f1 is just a statement 
+%fx is function
+%gard->gradint->inbuilt function
+%if we dont use syms, we will have to caluculate gradient and h on our own, which would be very lengthy
+
+% CODE FOR STEEPEST DESCENT METHOD
+% QUESTIION IS - PERFORM 4 ITERATIONS OF STEEPEST DESCENT ALGORITHM TO MINIMIZE
+% f(x1,x2)=x1-x2+2x1^2+2x1x2+x2^2
+% Starting from the point X1=[1,1]
+
+format short % Display output upto 4 digits
+clear all    % clear all the stored values
+clc          % Clear the screen
+
+%% Phase 1- Define objective function
+syms x1 x2
+f1 = x1 - x2 + 2*x1^2 + 2*x1*x2 + x2^2;
+fx = inline(f1); % to convert f1 into a function of x1 and x2.
+fobj = @(x) fx(x(:,1), x(:,2)); % convert the function in one variable
+
+%% Phase 2- Compute gradient of f
+grad = gradient(f1);
+G = inline(grad); % to convert grad into a function of x1 and x2.
+gradx = @(x) G(x(:,1), x(:,2)); % convert the function in one variable
+
+%% Phase 3- Compute Hessian Matrix
+H1 = hessian(f1);
+Hx = inline(H1); % to convert H1 into a function
+
+%% Phase 4- Iterations
+x0 = [1 1]; % given initial value of x1 x2
+maxiter = 4; % maximum number of iteration
+tol = 10^(-3); % maximum tolerance or error in our answer
+iter = 0; % iteration counter / initial counter
+X = []; % initial vector array
+
+while norm(gradx(x0)) > tol && iter < maxiter
+    X = [X; x0]; % save all vectors
+    S = -gradx(x0); % compute gradient at X
+    H = Hx(x0); % compute Hessian at X
+    lambda = S'*S ./ (S'*H*S); % compute lambda
+    Xnew = x0 + lambda.*S'; % update X
+    x0 = Xnew; % save new X
+    iter = iter + 1; % update iteration number
+end
+
+%% Phase 5- Print the solution
+fprintf('Optimal Solution X=[%f, %f]\n', x0(1), x0(2))
+fprintf('Optimal Value f(x)= %f \n', fobj(x0))
+
