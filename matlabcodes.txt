@@ -273,3 +273,35 @@ end
 fprintf('Optimal Solution X=[%f, %f]\n', x0(1), x0(2))
 fprintf('Optimal Value f(x)= %f \n', fobj(x0))
 
+
+
+PALAK STEEPEST DESCENT CODE
+clc;
+clear;
+
+% Function
+f = @(x1,x2) x1.^2 + 2*x2.^2;
+% Correct Gradient
+grad_f = @(x1,x2) [2*x1; 4*x2];
+% Initial point
+x = [3; 3];
+max_iter = 100;
+tol = 1e-6;
+alpha = 0.1;
+
+fprintf('Initial point: (%f, %f)\n', x(1), x(2));
+
+for iter = 1:max_iter
+    gradient = grad_f(x(1), x(2));
+    % Stopping condition
+    if norm(gradient) < tol
+        fprintf('convergence after %d iteration\n',iter-1)
+        break;
+    end
+    % Update rule
+    x = x - alpha * gradient;
+    % Print progress
+    fprintf('Iter %d: x = (%f, %f), f = %f\n', iter, x(1), x(2), f(x(1), x(2)));
+end
+fprintf('Optimal point: (%f, %f)\n', x(1), x(2));
+fprintf('Minimum value: %f\n', f(x(1), x(2)));
