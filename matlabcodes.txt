@@ -59,6 +59,13 @@ for s=1:50
 end
 
 
+
+
+
+
+
+
+
 LEAS_cOST METHOD
 
 clc;
@@ -105,6 +112,15 @@ disp("Final Allocation Matrix:")
 disp(X)
 disp("Total Transportation Cost:")
 disp(final_cost)
+
+
+
+
+
+
+
+
+
 
 SIMPLEX METHOD
 clc;
@@ -156,6 +172,15 @@ for s=1:50
     end
 end
 
+
+
+
+
+
+
+
+
+
 STEEPEST DESCENT
 
 format short 
@@ -189,6 +214,14 @@ end
 %% Phase 5- Print the solution
 fprintf('Optimal Solution X=[%f, %f]\n', x0(1), x0(2))
 fprintf('Optimal Value f(x)= %f \n', fobj(x0))
+
+
+
+
+
+
+
+
 
 
 
